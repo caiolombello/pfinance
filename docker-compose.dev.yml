@@ -10,6 +10,10 @@ services:
       - NODE_ENV=development
       - WATCHPACK_POLLING=true
       - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - NEXT_PUBLIC_SUPABASE_URL=${NEXT_PUBLIC_SUPABASE_URL}
+      - NEXT_PUBLIC_SUPABASE_ANON_KEY=${NEXT_PUBLIC_SUPABASE_ANON_KEY}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
     volumes:
       - .:/app
       - node_modules:/app/node_modules
@@ -30,6 +34,7 @@ services:
       - POSTGRES_DB=pfinance
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
     networks:
       - pfinance-network
     healthcheck:

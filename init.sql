@@ -1,3 +1,6 @@
+-- Select database
+\c pfinance;
+
 -- CreateTable
 CREATE TABLE "Expense" (
     "id" SERIAL NOT NULL,
@@ -52,3 +55,17 @@ CREATE UNIQUE INDEX "CreditCard_bank_lastFour_key" ON "CreditCard"("bank", "last
 -- AddForeignKey
 ALTER TABLE "Expense" ADD CONSTRAINT "Expense_creditCardId_fkey" FOREIGN KEY ("creditCardId") REFERENCES "CreditCard"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
+-- CreateTable
+CREATE TABLE "User" (
+    "id" TEXT NOT NULL,
+    "name" TEXT,
+    "email" TEXT NOT NULL,
+    "password" TEXT NOT NULL,
+    "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMP(3) NOT NULL,
+
+    CONSTRAINT "User_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateIndex
+CREATE UNIQUE INDEX "User_email_key" ON "User"("email");

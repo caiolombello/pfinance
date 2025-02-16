@@ -1,35 +1,34 @@
 "use client"
 
 import { useState } from "react"
-import { signIn } from "next-auth/react"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
+import { createClient } from "@/utils/supabase/client"
+import { FcGoogle } from "react-icons/fc"
 
 export default function LoginPage() {
-  const router = useRouter()
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState("")
+  const supabase = createClient()
 
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    setLoading(true)
-    setError("")
-
-    const formData = new FormData(e.currentTarget)
-    const result = await signIn("credentials", {
-      email: formData.get("email"),
-      password: formData.get("password"),
-      redirect: false,
-    })
-
-    if (result?.error) {
-      setError("Email ou senha inválidos")
+  async function handleGoogleLogin() {
+    try {
+      setLoading(true)
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          queryParams: {
+            access_type: 'offline',
+            prompt: 'consent',
+          },
+          redirectTo: `${window.location.origin}/auth/callback`
+        }
+      })
+      if (error) throw error
+    } catch {
+      setError("Erro ao fazer login com Google")
+    } finally {
       setLoading(false)
-      return
     }
-
-    router.push("/")
   }
 
   return (
@@ -40,30 +39,19 @@ export default function LoginPage() {
           <p className="text-gray-600">Entre para acessar suas finanças</p>
         </div>
         
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <Input
-            name="email"
-            type="email"
-            placeholder="Email"
-            required
-          />
-          <Input
-            name="password"
-            type="password"
-            placeholder="Senha"
-            required
-          />
-          {error && (
-            <p className="text-red-500 text-sm">{error}</p>
-          )}
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={loading}
-          >
-            {loading ? "Entrando..." : "Entrar"}
-          </Button>
-        </form>
+        {error && (
+          <p className="text-red-500 text-sm text-center">{error}</p>
+        )}
+        
+        <Button 
+          onClick={handleGoogleLogin}
+          className="w-full flex items-center justify-center gap-2"
+          disabled={loading}
+          variant="outline"
+        >
+          <FcGoogle className="w-5 h-5" />
+          {loading ? "Entrando..." : "Continuar com Google"}
+        </Button>
       </div>
     </div>
   )
