@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Expense {
+  id               Int       @id @default(autoincrement())
+  description      String
+  amount           Float
+  installmentAmount Float     @default(0)
+  date             DateTime
+  bank             String?
+  cardLastFour     String?
+  category         String
+  installments     Int       @default(1)
+  installmentNumber Int?
+  currentInstallment Int      @default(1)
+  type             String?
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  creditCard       CreditCard? @relation(fields: [cardId], references: [id])
+  cardId           Int?
+}
+
+model CreditCard {
+  id              Int       @id @default(autoincrement())
+  bank            String
+  lastFour        String
+  limit           Float
+  currentSpending Float
+  expenses        Expense[]
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  @@unique([bank, lastFour])
+}
+
+model FinancialGoal {
+  id            String   @id @default(uuid())
+  name          String
+  targetAmount  Float
+  currentAmount Float
+  deadline      DateTime
+  category      String
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+} 

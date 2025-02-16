@@ -1,0 +1,48 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "3000:3000"
+    environment:
+      - DATABASE_URL=postgresql://postgres:postgres@db:5432/pfinance?schema=public
+      - NODE_ENV=development
+      - WATCHPACK_POLLING=true
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+    volumes:
+      - .:/app
+      - node_modules:/app/node_modules
+      - next-cache:/app/.next
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - pfinance-network
+
+  db:
+    image: postgres:16-alpine
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=pfinance
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - pfinance-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  postgres_data:
+  node_modules:
+  next-cache:
+
+networks:
+  pfinance-network:
+    driver: bridge 

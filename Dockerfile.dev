@@ -1,0 +1,21 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Instalar dependências necessárias
+RUN apk add --no-cache libc6-compat netcat-openbsd
+
+# Copiar arquivos do projeto
+COPY package.json package-lock.json ./
+RUN npm install
+
+# Copiar o resto dos arquivos
+COPY . .
+
+# Script de inicialização
+COPY docker-entrypoint.dev.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.dev.sh
+
+EXPOSE 3000
+
+ENTRYPOINT ["docker-entrypoint.dev.sh"] 
