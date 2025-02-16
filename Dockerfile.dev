@@ -6,11 +6,8 @@ WORKDIR /app
 RUN apk add --no-cache libc6-compat netcat-openbsd
 
 # Copiar arquivos do projeto
-COPY package.json package-lock.json ./
-RUN npm install
-
-# Copiar o resto dos arquivos
 COPY . .
+RUN npm install
 
 # Script de inicialização
 COPY docker-entrypoint.dev.sh /usr/local/bin/

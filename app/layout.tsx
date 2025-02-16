@@ -12,7 +12,7 @@ import { AuthProvider } from "@/providers/auth"
 const inter = Inter({ subsets: ["latin"] })
 
 export const metadata: Metadata = {
-  title: "Controle Financeiro Pessoal",
+  title: "pFinance",
   description: "Gerencie seus gastos de forma simples e eficiente",
 }
 
