@@ -1,114 +1,77 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import type { FinancialGoal } from "../types"
+import type { FinancialGoal } from "@/app/types"
 
 interface FinancialGoalFormProps {
-  onSubmit: (goal: Omit<FinancialGoal, "id">) => void
-  initialValues?: FinancialGoal
+  onSubmit: (goalData: Omit<FinancialGoal, "id">) => Promise<void>
+  initialValues?: Partial<FinancialGoal>
 }
 
 export function FinancialGoalForm({ onSubmit, initialValues }: FinancialGoalFormProps) {
-  const [formData, setFormData] = useState<Omit<FinancialGoal, "id">>({
+  const [formData, setFormData] = useState<Omit<FinancialGoal, "id" | "createdAt" | "updatedAt">>({
     name: initialValues?.name || "",
     targetAmount: initialValues?.targetAmount || 0,
     currentAmount: initialValues?.currentAmount || 0,
     deadline: initialValues?.deadline || new Date().toISOString().split('T')[0],
-    category: initialValues?.category || "",
-    createdAt: initialValues?.createdAt || new Date(),
-    updatedAt: initialValues?.updatedAt || new Date()
+    category: initialValues?.category || ""
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
-    onSubmit(formData)
-    if (!initialValues) {
+    try {
+      await onSubmit(formData)
+      // Resetar o formulário após o envio bem-sucedido
       setFormData({
         name: "",
         targetAmount: 0,
         currentAmount: 0,
         deadline: new Date().toISOString().split('T')[0],
-        category: "",
-        createdAt: new Date(),
-        updatedAt: new Date()
+        category: ""
       })
+    } catch (error) {
+      console.error("Erro ao criar meta:", error)
     }
-  }
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: type === "number" ? Number(value) : value,
-    }))
   }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="name">Nome da Meta</Label>
-        <Input 
-          id="name" 
-          name="name" 
-          value={formData.name} 
-          onChange={handleChange} 
-          required 
-        />
-      </div>
-      <div>
-        <Label htmlFor="targetAmount">Valor Alvo</Label>
-        <Input 
-          id="targetAmount" 
-          name="targetAmount" 
-          type="number" 
-          value={formData.targetAmount} 
-          onChange={handleChange} 
-          required 
-          min={0} 
-          step="0.01"
-        />
-      </div>
-      <div>
-        <Label htmlFor="currentAmount">Valor Atual</Label>
-        <Input 
-          id="currentAmount" 
-          name="currentAmount" 
-          type="number" 
-          value={formData.currentAmount} 
-          onChange={handleChange} 
-          required 
-          min={0} 
-          step="0.01"
-        />
-      </div>
-      <div>
-        <Label htmlFor="deadline">Data Limite</Label>
-        <Input 
-          id="deadline" 
-          name="deadline" 
-          type="date" 
-          value={formData.deadline.toString().split('T')[0]} 
-          onChange={handleChange} 
-          required 
-        />
-      </div>
-      <div>
-        <Label htmlFor="category">Categoria</Label>
-        <Input 
-          id="category" 
-          name="category" 
-          value={formData.category} 
-          onChange={handleChange} 
-          required 
-        />
-      </div>
+      <Input
+        placeholder="Nome da meta"
+        value={formData.name}
+        onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+        required
+      />
+      <Input
+        type="number"
+        placeholder="Valor alvo"
+        value={formData.targetAmount}
+        onChange={(e) => setFormData({ ...formData, targetAmount: Number(e.target.value) })}
+        required
+      />
+      <Input
+        type="number"
+        placeholder="Valor atual"
+        value={formData.currentAmount}
+        onChange={(e) => setFormData({ ...formData, currentAmount: Number(e.target.value) })}
+        required
+      />
+      <Input
+        type="date"
+        value={formData.deadline}
+        onChange={(e) => setFormData({ ...formData, deadline: e.target.value })}
+        required
+      />
+      <Input
+        placeholder="Categoria"
+        value={formData.category}
+        onChange={(e) => setFormData({ ...formData, category: e.target.value })}
+        required
+      />
       <Button type="submit">
-        {initialValues ? "Atualizar Meta" : "Criar Meta"}
+        Salvar Meta
       </Button>
     </form>
   )

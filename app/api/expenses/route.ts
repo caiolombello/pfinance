@@ -1,17 +1,18 @@
 import { NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
-import type { Expense } from "../types"
 
 export async function GET() {
   try {
     const expenses = await prisma.expense.findMany({
-      orderBy: { date: "desc" },
+      orderBy: { date: "desc" }
     })
-
     return NextResponse.json({ expenses })
   } catch (error) {
-    console.error("Error fetching expenses:", error)
-    return NextResponse.json({ error: "Error fetching expenses" }, { status: 500 })
+    console.error("Erro ao buscar despesas:", error)
+    return NextResponse.json(
+      { error: "Erro ao buscar despesas" },
+      { status: 500 }
+    )
   }
 }
 
@@ -19,39 +20,44 @@ export async function POST(request: Request) {
   try {
     const data = await request.json()
     
-    // Criar a despesa
+    // Create the expense without cardId
     const expense = await prisma.expense.create({
       data: {
         description: data.description,
         amount: data.amount,
         installmentAmount: data.installmentAmount,
         date: new Date(data.date),
+        bank: data.bank,
+        cardLastFour: data.cardLastFour,
         category: data.category,
         installments: data.installments,
         currentInstallment: data.currentInstallment,
-        bank: data.bank || null,
-        cardLastFour: data.cardLastFour || null,
-      },
+        installmentNumber: data.installmentNumber,
+        type: data.type,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        creditCard: data.creditCardId ? {
+          connect: { id: data.creditCardId }
+        } : undefined
+      }
     })
 
-    // Se tiver cartão, atualizar o gasto atual
+    // If the expense is associated with a card, update the card's currentSpending
     if (data.bank && data.cardLastFour) {
-      await prisma.creditCard.update({
+      await prisma.creditCard.updateMany({
         where: {
-          bank_lastFour: {
-            bank: data.bank,
-            lastFour: data.cardLastFour,
-          },
+          bank: data.bank,
+          lastFour: data.cardLastFour
         },
         data: {
           currentSpending: {
-            increment: data.installmentAmount,
-          },
-        },
+            increment: data.amount
+          }
+        }
       })
     }
 
-    return NextResponse.json({ expense })
+    return NextResponse.json(expense)
   } catch (error) {
     console.error("Erro ao criar despesa:", error)
     return NextResponse.json(

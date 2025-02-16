@@ -2,9 +2,9 @@
 
 import type React from "react"
 import { createContext, useContext, useState } from "react"
+import { AddExpenseModal } from "../components/add-expense-modal"
 
 interface ModalContextType {
-  isOpen: boolean
   openModal: () => void
   closeModal: () => void
 }
@@ -18,8 +18,16 @@ export function ModalProvider({ children }: { children: React.ReactNode }) {
   const closeModal = () => setIsOpen(false)
 
   return (
-    <ModalContext.Provider value={{ isOpen, openModal, closeModal }}>
+    <ModalContext.Provider value={{ openModal, closeModal }}>
       {children}
+      <AddExpenseModal 
+        open={isOpen} 
+        onOpenChange={setIsOpen}
+        onExpenseAdded={() => {
+          // Você pode adicionar uma função de callback aqui
+          // para atualizar os dados após adicionar uma despesa
+        }}
+      />
     </ModalContext.Provider>
   )
 }

@@ -5,6 +5,39 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Overview } from "./components/overview"
 import { RecentExpenses } from "./components/recent-expenses"
 import { CreditCardUsage } from "./components/credit-card-usage"
+import { Loader2 } from "lucide-react"
+
+interface DashboardData {
+  totalExpenses: number
+  expenseChange: number
+  biggestExpense: {
+    category: string
+    amount: number
+  }
+  mostUsedCard: {
+    name: string
+    usage: number
+  }
+  savings: {
+    amount: number
+    change: number
+  }
+  monthlyOverview: Array<{
+    month: string
+    expenses: number
+  }>
+  recentExpenses: Array<{
+    id: number
+    description: string
+    amount: number
+    date: string
+  }>
+  creditCardUsage: Array<{
+    name: string
+    limit: number
+    used: number
+  }>
+}
 
 // Formato JSON esperado da API:
 /*
@@ -45,7 +78,7 @@ import { CreditCardUsage } from "./components/credit-card-usage"
 */
 
 export default function Home() {
-  const [dashboardData, setDashboardData] = useState<any>(null)
+  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null)
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -71,7 +104,11 @@ export default function Home() {
   }, [])
 
   if (isLoading) {
-    return <div>Carregando...</div>
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
   if (error) {
@@ -189,7 +226,21 @@ export default function Home() {
             </CardDescription>
           </CardHeader>
           <CardContent className="pl-2">
-            <Overview data={dashboardData.monthlyOverview} />
+            <Overview 
+              data={dashboardData.monthlyOverview} 
+              totalExpenses={dashboardData.totalExpenses}
+              expenseChange={dashboardData.expenseChange}
+              topCategory={{
+                name: dashboardData.biggestExpense.category,
+                amount: dashboardData.biggestExpense.amount
+              }}
+              creditCards={dashboardData.creditCardUsage.map(card => ({
+                bank: card.name.split(' ')[0],
+                lastFour: card.name.split(' ')[1] || '0000',
+                limit: card.limit,
+                currentSpending: card.used
+              }))}
+            />
           </CardContent>
         </Card>
         <Card className="col-span-3">

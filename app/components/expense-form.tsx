@@ -20,7 +20,7 @@ export function ExpenseForm({ onSubmit, initialValues }: ExpenseFormProps) {
     description: initialValues?.description || "",
     amount: initialValues?.amount || 0,
     installmentAmount: initialValues?.installmentAmount || 0,
-    date: initialValues?.date || new Date().toISOString().split('T')[0],
+    date: initialValues?.date ? new Date(initialValues.date).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
     bank: initialValues?.bank || "",
     cardLastFour: initialValues?.cardLastFour || "",
     category: initialValues?.category || "",
@@ -30,7 +30,7 @@ export function ExpenseForm({ onSubmit, initialValues }: ExpenseFormProps) {
     type: initialValues?.type || null,
     createdAt: initialValues?.createdAt || new Date(),
     updatedAt: initialValues?.updatedAt || new Date(),
-    cardId: initialValues?.cardId || null
+    creditCardId: initialValues?.creditCardId || null
   })
   const [isInstallment, setIsInstallment] = useState((initialValues?.installments ?? 1) > 1)
   const [cards, setCards] = useState<CreditCard[]>([])
@@ -67,11 +67,26 @@ export function ExpenseForm({ onSubmit, initialValues }: ExpenseFormProps) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
+    const formattedDate = new Date(formData.date + 'T00:00:00.000Z').toISOString()
+    
     if (selectedCard && selectedCard !== "new") {
       const [bank, lastFour] = selectedCard.split("-")
-      onSubmit({ ...formData, bank, cardLastFour: lastFour })
+      const card = cards.find(c => c.bank === bank && c.lastFour === lastFour)
+      const submissionData = {
+        ...formData,
+        date: formattedDate,
+        bank,
+        cardLastFour: lastFour,
+        creditCardId: card?.id || null
+      }
+      onSubmit(submissionData)
     } else {
-      onSubmit(formData)
+      const submissionData = {
+        ...formData,
+        date: formattedDate,
+        creditCardId: null
+      }
+      onSubmit(submissionData)
     }
   }
 
@@ -86,6 +101,12 @@ export function ExpenseForm({ onSubmit, initialValues }: ExpenseFormProps) {
     } else {
       setFormData(prev => ({ ...prev, bank: "", cardLastFour: "" }))
     }
+  }
+
+  // Função para lidar com a adição de um novo cartão
+  const handleAddCard = (card: CreditCard) => {
+    setCards(prevCards => [...prevCards, card])
+    setSelectedCard(`${card.bank}-${card.lastFour}`)
   }
 
   return (
@@ -227,6 +248,9 @@ export function ExpenseForm({ onSubmit, initialValues }: ExpenseFormProps) {
 
       {showAddCard && (
         <AddCreditCardModal 
+          isOpen={showAddCard}
+          onClose={() => setShowAddCard(false)}
+          onAddCard={handleAddCard}
           onSuccess={() => {
             setShowAddCard(false)
             window.location.reload()

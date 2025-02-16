@@ -3,10 +3,10 @@
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { CreditCardForm } from "@/components/credit-card-form"
-import { CreditCardList } from "@/components/credit-card-list"
+import { CreditCardForm } from "../components/credit-card-form"
+import { CreditCardList } from "../components/credit-card-list"
 import type { CreditCard } from "@/app/types"
-import { LoadingState } from "../components/loading-state"
+import { Loader2 } from "lucide-react"
 
 // Formato JSON esperado da API:
 /*
@@ -26,15 +26,14 @@ import { LoadingState } from "../components/loading-state"
 export default function CartoesPage() {
   const [cards, setCards] = useState<CreditCard[]>([])
   const [showAddForm, setShowAddForm] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   useEffect(() => {
     fetchCards()
   }, [])
 
-  const fetchCards = async () => {
+  async function fetchCards() {
     try {
-      setIsLoading(true)
       const response = await fetch("/api/credit-cards")
       if (!response.ok) throw new Error("Falha ao carregar cartões")
       const data = await response.json()
@@ -42,57 +41,70 @@ export default function CartoesPage() {
     } catch (error) {
       console.error("Erro ao carregar cartões:", error)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const handleAddCard = async (cardData: Omit<CreditCard, "id">) => {
+  const handleCreateCard = async (cardData: Omit<CreditCard, "id" | "currentSpending" | "createdAt" | "updatedAt">) => {
     try {
       const response = await fetch("/api/credit-cards", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cardData),
       })
-      if (!response.ok) throw new Error("Falha ao adicionar cartão")
-      fetchCards()
-      setShowAddForm(false)
+
+      if (!response.ok) throw new Error("Falha ao criar cartão")
+      await fetchCards() // Recarrega a lista após criar
     } catch (error) {
-      console.error("Erro ao adicionar cartão:", error)
+      console.error("Erro ao criar cartão:", error)
+      throw error
     }
   }
 
-  const handleUpdateCard = async (updatedCard: CreditCard) => {
+  const handleUpdateCard = async (cardData: CreditCard) => {
     try {
-      const response = await fetch(`/api/credit-cards/${updatedCard.id}`, {
+      const response = await fetch(`/api/credit-cards/${cardData.id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(updatedCard),
+        body: JSON.stringify(cardData)
       })
+
       if (!response.ok) throw new Error("Falha ao atualizar cartão")
-      fetchCards()
+      
+      // Atualiza o estado local sem recarregar a página
+      setCards(prevCards => 
+        prevCards.map(card => 
+          card.id === cardData.id ? { ...card, ...cardData } : card
+        )
+      )
+      
+      await fetchCards() // Recarrega para garantir sincronização
     } catch (error) {
       console.error("Erro ao atualizar cartão:", error)
+      throw error
     }
   }
 
-  const handleDeleteCard = async (cardId: number) => {
-    if (!confirm("Tem certeza que deseja excluir este cartão?")) return
-    
+  const handleDeleteCard = async (id: number) => {
     try {
-      const response = await fetch(`/api/credit-cards/${cardId}`, {
+      const response = await fetch("/api/credit-cards", {
         method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ id }),
       })
+
       if (!response.ok) throw new Error("Falha ao excluir cartão")
-      fetchCards()
+      await fetchCards() // Recarrega a lista após excluir
     } catch (error) {
       console.error("Erro ao excluir cartão:", error)
+      throw error
     }
   }
 
-  if (isLoading) {
+  if (loading) {
     return (
-      <div className="container mx-auto py-6">
-        <LoadingState />
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     )
   }
@@ -115,7 +127,7 @@ export default function CartoesPage() {
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <CreditCardForm onSubmit={handleAddCard} />
+            <CreditCardForm onSubmit={handleCreateCard} />
           </CardContent>
         </Card>
       )}

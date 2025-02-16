@@ -1,10 +1,8 @@
-import { NextResponse } from "next/server"
+import { NextResponse, NextRequest } from "next/server"
 import { prisma } from "@/lib/prisma"
 
-export async function PUT(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function PUT(request: NextRequest, context: unknown): Promise<NextResponse> {
+  const { params } = context as { params: { id: string } }
   try {
     const data = await request.json()
     const goal = await prisma.financialGoal.update({
@@ -20,17 +18,12 @@ export async function PUT(
     return NextResponse.json(goal)
   } catch (error) {
     console.error("Error updating goal:", error)
-    return NextResponse.json(
-      { error: "Erro ao atualizar meta" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Erro ao atualizar meta" }, { status: 500 })
   }
 }
 
-export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, context: unknown): Promise<NextResponse> {
+  const { params } = context as { params: { id: string } }
   try {
     await prisma.financialGoal.delete({
       where: { id: params.id },
@@ -38,9 +31,6 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error) {
     console.error("Error deleting goal:", error)
-    return NextResponse.json(
-      { error: "Erro ao excluir meta" },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: "Erro ao excluir meta" }, { status: 500 })
   }
-} 
+}

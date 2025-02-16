@@ -116,7 +116,7 @@ export async function GET() {
         id: e.id,
         description: e.description,
         amount: e.amount,
-        date: e.date,
+        date: e.date.toISOString(),
         category: e.category
       }))
 

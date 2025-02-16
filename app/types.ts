@@ -1,23 +1,23 @@
-export interface Expense {
+export type Expense = {
   id: number
   description: string
   amount: number
   installmentAmount: number
   date: string
-  bank: string | null
-  cardLastFour: string | null
+  bank: string
+  cardLastFour: string
   category: string
   installments: number
-  installmentNumber: number | null
   currentInstallment: number
+  installmentNumber: number | null
   type: string | null
   createdAt: Date
   updatedAt: Date
-  cardId: number | null
+  creditCardId: number | null
 }
 
 export type CreditCard = {
-  id: string
+  id: number
   bank: string
   lastFour: string
   limit: number
@@ -65,7 +65,6 @@ export interface DashboardData {
     description: string
     amount: number
     date: string
-    category: string
   }>
   creditCardUsage: Array<{
     name: string

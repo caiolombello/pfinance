@@ -21,8 +21,8 @@ export function FinancialGoalList({ goals, onUpdate, onDelete }: FinancialGoalLi
     }).format(value)
   }
 
-  const formatDate = (date: Date) => {
-    return new Date(date).toLocaleDateString('pt-BR')
+  const formatDate = (dateString: string) => {
+    return new Date(dateString).toLocaleDateString('pt-BR')
   }
 
   return (
@@ -33,8 +33,8 @@ export function FinancialGoalList({ goals, onUpdate, onDelete }: FinancialGoalLi
             <div className="space-y-4">
               <FinancialGoalForm 
                 initialValues={goal} 
-                onSubmit={(updatedGoal) => {
-                  onUpdate({ ...updatedGoal, id: goal.id })
+                onSubmit={async (updatedGoal) => {
+                  await onUpdate({ ...updatedGoal, id: goal.id })
                   setEditingId(null)
                 }} 
               />

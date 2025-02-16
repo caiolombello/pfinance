@@ -13,6 +13,7 @@ import { Input } from "@/components/ui/input"
 import { Button } from "@/components/ui/button"
 import { ArrowUpDown, Search } from "lucide-react"
 import type { Expense } from "@/app/types"
+import { formatCurrency } from "../lib/utils"
 
 interface ExpensesTableProps {
   expenses: Expense[]
@@ -34,13 +35,16 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
     [expenses]
   )
 
+  // Filtrar valores null/undefined e garantir que são strings
   const uniqueBanks = useMemo(() => 
-    Array.from(new Set(expenses.map(e => e.bank).filter(Boolean))).sort(),
+    Array.from(new Set(expenses.map(e => e.bank).filter((bank): bank is string => 
+      bank !== null && bank !== undefined && bank !== ""
+    ))).sort(),
     [expenses]
   )
 
   // Função de ordenação
-  const sortExpenses = (a: Expense, b: Expense) => {
+  const sortExpenses = useMemo(() => (a: Expense, b: Expense) => {
     const direction = sortDirection === 'asc' ? 1 : -1
     
     switch (sortField) {
@@ -57,7 +61,7 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
       default:
         return 0
     }
-  }
+  }, [sortField, sortDirection])
 
   // Função para alternar ordenação
   const toggleSort = (field: SortField) => {
@@ -73,19 +77,13 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
   const filteredExpenses = useMemo(() => {
     return expenses
       .filter(expense => {
-        const matchesSearch = search.toLowerCase() === '' || 
-          expense.description.toLowerCase().includes(search.toLowerCase()) ||
-          expense.category.toLowerCase().includes(search.toLowerCase()) ||
-          expense.bank?.toLowerCase().includes(search.toLowerCase()) ||
-          expense.cardLastFour?.includes(search)
-        
-        const matchesCategory = categoryFilter === 'all' || expense.category === categoryFilter
-        const matchesBank = bankFilter === 'all' || expense.bank === bankFilter
-
+        const matchesSearch = expense.description.toLowerCase().includes(search.toLowerCase())
+        const matchesCategory = categoryFilter === "all" || expense.category === categoryFilter
+        const matchesBank = bankFilter === "all" || expense.bank === bankFilter
         return matchesSearch && matchesCategory && matchesBank
       })
       .sort(sortExpenses)
-  }, [expenses, search, categoryFilter, bankFilter, sortField, sortDirection])
+  }, [expenses, search, categoryFilter, bankFilter, sortExpenses])
 
   // Calcular totais
   const totalAmount = filteredExpenses.reduce((sum, expense) => sum + expense.amount, 0)
@@ -114,16 +112,18 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
             ))}
           </select>
 
-          <select
-            value={bankFilter}
-            onChange={(e) => setBankFilter(e.target.value)}
-            className="w-[150px] rounded-md border border-input bg-background px-3 py-2"
-          >
-            <option value="all">Todos Bancos</option>
-            {uniqueBanks.map(bank => (
-              <option key={bank} value={bank}>{bank}</option>
-            ))}
-          </select>
+          <div>
+            <select
+              value={bankFilter}
+              onChange={(e) => setBankFilter(e.target.value)}
+              className="flex h-9 rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm focus:outline-none focus:ring-1 focus:ring-ring"
+            >
+              <option value="all">Todos Bancos</option>
+              {uniqueBanks.map(bank => (
+                <option key={bank} value={bank}>{bank}</option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 
@@ -164,7 +164,7 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
               <TableRow key={expense.id}>
                 <TableCell>{new Date(expense.date).toLocaleDateString()}</TableCell>
                 <TableCell>{expense.description}</TableCell>
-                <TableCell>R$ {expense.amount.toFixed(2)}</TableCell>
+                <TableCell>{formatCurrency(expense.amount)}</TableCell>
                 <TableCell>{expense.category}</TableCell>
                 <TableCell>
                   {expense.bank} {expense.cardLastFour && `(${expense.cardLastFour})`}
@@ -178,7 +178,7 @@ export function ExpensesTable({ expenses }: ExpensesTableProps) {
             ))}
             <TableRow className="font-bold">
               <TableCell colSpan={2}>Total</TableCell>
-              <TableCell>R$ {totalAmount.toFixed(2)}</TableCell>
+              <TableCell>{formatCurrency(totalAmount)}</TableCell>
               <TableCell colSpan={3}></TableCell>
             </TableRow>
           </TableBody>

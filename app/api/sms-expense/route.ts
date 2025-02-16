@@ -13,7 +13,7 @@ export async function POST(request: Request) {
         'Authorization': `Bearer ${process.env.OPENAI_API_KEY}`
       },
       body: JSON.stringify({
-        model: "gpt-4o",
+        model: "gpt-4o-mini",
         messages: [
           {
             role: "system",
@@ -63,7 +63,7 @@ export async function POST(request: Request) {
       type: "CREDIT_CARD",
       createdAt: new Date(),
       updatedAt: new Date(),
-      cardId: null
+      creditCardId: null
     })
 
     // Criar a despesa no banco de dados

@@ -2,7 +2,7 @@
 
 import Link from "next/link"
 import { usePathname } from "next/navigation"
-import { cn } from "@/lib/utils"
+import { cn } from "../lib/utils"
 import { Button } from "@/components/ui/button"
 import { CreditCard, Home, PieChart, Plus, Target } from "lucide-react"
 import { ThemeToggle } from "./theme-toggle"
@@ -49,7 +49,7 @@ export function Sidebar() {
               </ul>
             </li>
             <li className="mt-auto">
-              <Button className="w-full" onClick={openModal}>
+              <Button className="w-full" onClick={() => openModal()}>
                 <Plus className="mr-2 h-4 w-4" /> Adicionar Despesa
               </Button>
             </li>

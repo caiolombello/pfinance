@@ -3,63 +3,98 @@
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useRouter } from "next/navigation"
+import { Label } from "@/components/ui/label"
+import type { CreditCard } from "@/app/types"
 
-export function CreditCardForm() {
-  const router = useRouter()
+interface CreditCardFormProps {
+  onSubmit: (cardData: Omit<CreditCard, "id" | "createdAt" | "updatedAt">) => Promise<void>
+  initialValues?: Partial<CreditCard>
+}
+
+export function CreditCardForm({ onSubmit, initialValues }: CreditCardFormProps) {
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
-    bank: "",
-    lastFour: "",
-    limit: 0,
+    bank: initialValues?.bank || "",
+    lastFour: initialValues?.lastFour || "",
+    limit: initialValues?.limit || "",
+    currentSpending: initialValues?.currentSpending || ""
   })
 
-  async function onSubmit(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
     setLoading(true)
 
     try {
-      const response = await fetch("/api/credit-cards", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
+      await onSubmit({
+        ...formData,
+        limit: Number(formData.limit) || 0,
+        currentSpending: Number(formData.currentSpending) || 0
       })
-
-      if (!response.ok) throw new Error("Falha ao criar cartão")
-      
-      router.refresh()
-      setFormData({ bank: "", lastFour: "", limit: 0 })
+      if (!initialValues) {
+        setFormData({ bank: "", lastFour: "", limit: "", currentSpending: "" })
+      }
     } catch (error) {
-      console.error("Erro ao criar cartão:", error)
+      console.error("Erro ao salvar cartão:", error)
     } finally {
       setLoading(false)
     }
   }
 
   return (
-    <form onSubmit={onSubmit} className="space-y-4">
-      <Input
-        placeholder="Banco"
-        value={formData.bank}
-        onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
-        required
-      />
-      <Input
-        placeholder="Últimos 4 dígitos"
-        value={formData.lastFour}
-        onChange={(e) => setFormData({ ...formData, lastFour: e.target.value })}
-        maxLength={4}
-        required
-      />
-      <Input
-        type="number"
-        placeholder="Limite"
-        value={formData.limit}
-        onChange={(e) => setFormData({ ...formData, limit: Number(e.target.value) })}
-        required
-      />
-      <Button type="submit" disabled={loading}>
-        {loading ? "Criando..." : "Adicionar Cartão"}
+    <form onSubmit={handleSubmit} className="space-y-4">
+      <div className="space-y-2">
+        <Label htmlFor="bank">Banco</Label>
+        <Input
+          id="bank"
+          placeholder="Ex: Nubank, Itaú, Bradesco"
+          value={formData.bank}
+          onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="lastFour">Últimos 4 dígitos do cartão</Label>
+        <Input
+          id="lastFour"
+          placeholder="Ex: 1234"
+          value={formData.lastFour}
+          onChange={(e) => setFormData({ ...formData, lastFour: e.target.value })}
+          maxLength={4}
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="limit">Limite do cartão</Label>
+        <Input
+          id="limit"
+          type="number"
+          placeholder="Ex: 5000"
+          value={formData.limit}
+          onChange={(e) => setFormData({ ...formData, limit: e.target.value })}
+          min="0"
+          step="0.01"
+          required
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label htmlFor="currentSpending">Valor já utilizado do limite</Label>
+        <Input
+          id="currentSpending"
+          type="number"
+          placeholder="Ex: 1500"
+          value={formData.currentSpending}
+          onChange={(e) => setFormData({ ...formData, currentSpending: e.target.value })}
+          min="0"
+          step="0.01"
+          required
+        />
+      </div>
+
+      <Button type="submit" className="w-full" disabled={loading}>
+        {loading ? "Salvando..." : initialValues ? "Atualizar Cartão" : "Adicionar Cartão"}
       </Button>
     </form>
   )

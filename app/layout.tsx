@@ -6,7 +6,7 @@ import { Sidebar } from "./components/sidebar"
 import { MobileMenu } from "./components/mobile-menu"
 import { Providers } from "./providers"
 import { ModalProvider } from "./contexts/ModalContext"
-import { AddExpenseModal } from "./components/add-expense-modal"
+// import { Toaster } from 'sonner'
 
 const inter = Inter({ subsets: ["latin"] })
 
@@ -31,8 +31,8 @@ export default function RootLayout({
               <main className="lg:pl-72">
                 <div className="px-4 py-10 sm:px-6 lg:px-8">{children}</div>
               </main>
-              <AddExpenseModal />
             </div>
+            {/* <Toaster richColors closeButton position="top-right" /> */}
           </ModalProvider>
         </Providers>
       </body>
