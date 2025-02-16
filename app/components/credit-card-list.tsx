@@ -1,83 +1,70 @@
-import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Progress } from "@/components/ui/progress"
-import { CreditCardForm } from "./credit-card-form"
-import type { CreditCard } from "@/app/types"
+"use client"
 
-interface CreditCardListProps {
-  cards: CreditCard[]
-  onUpdate: (card: CreditCard) => void
-  onDelete: (cardId: number) => void
+import { useEffect, useState } from "react"
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table"
+import { LoadingState } from "@/components/loading-state"
+
+interface CreditCard {
+  id: number
+  bank: string
+  lastFour: string
+  limit: number
+  currentSpending: number
 }
 
-export function CreditCardList({ cards, onUpdate, onDelete }: CreditCardListProps) {
-  const [editingId, setEditingId] = useState<number | null>(null)
+export function CreditCardList() {
+  const [cards, setCards] = useState<CreditCard[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const formatCurrency = (value: number) => {
-    return new Intl.NumberFormat('pt-BR', {
-      style: 'currency',
-      currency: 'BRL'
-    }).format(value)
-  }
+  useEffect(() => {
+    async function fetchCards() {
+      try {
+        const response = await fetch("/api/credit-cards")
+        if (!response.ok) throw new Error("Falha ao carregar cartões")
+        const data = await response.json()
+        setCards(data.creditCards)
+      } catch (error) {
+        console.error("Erro ao carregar cartões:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchCards()
+  }, [])
+
+  if (loading) return <LoadingState />
 
   return (
-    <div className="space-y-4">
-      {cards.map((card) => (
-        <Card key={card.id} className="p-4">
-          {editingId === card.id ? (
-            <div className="space-y-4">
-              <CreditCardForm 
-                initialValues={card} 
-                onSubmit={(updatedCard) => {
-                  onUpdate({ ...updatedCard, id: card.id })
-                  setEditingId(null)
-                }} 
-              />
-              <Button 
-                variant="outline" 
-                onClick={() => setEditingId(null)}
-              >
-                Cancelar
-              </Button>
-            </div>
-          ) : (
-            <CardContent className="p-0">
-              <div className="flex items-center justify-between mb-4">
-                <div>
-                  <h3 className="text-lg font-semibold">
-                    {card.bank} (**** {card.lastFour})
-                  </h3>
-                  <p className="text-sm text-muted-foreground">
-                    {formatCurrency(card.currentSpending)} de {formatCurrency(card.limit)}
-                  </p>
-                </div>
-                <div className="space-x-2">
-                  <Button 
-                    variant="outline" 
-                    onClick={() => setEditingId(card.id)}
-                  >
-                    Editar
-                  </Button>
-                  <Button 
-                    variant="destructive" 
-                    onClick={() => onDelete(card.id)}
-                  >
-                    Excluir
-                  </Button>
-                </div>
-              </div>
-              <Progress 
-                value={(card.currentSpending / card.limit) * 100} 
-                className="h-2"
-              />
-              <p className="text-sm text-right mt-1">
-                {((card.currentSpending / card.limit) * 100).toFixed(1)}% utilizado
-              </p>
-            </CardContent>
-          )}
-        </Card>
-      ))}
+    <div className="rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Banco</TableHead>
+            <TableHead>Últimos 4 dígitos</TableHead>
+            <TableHead>Limite</TableHead>
+            <TableHead>Gasto Atual</TableHead>
+            <TableHead>Disponível</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {cards.map((card) => (
+            <TableRow key={card.id}>
+              <TableCell>{card.bank}</TableCell>
+              <TableCell>{card.lastFour}</TableCell>
+              <TableCell>R$ {card.limit.toFixed(2)}</TableCell>
+              <TableCell>R$ {card.currentSpending.toFixed(2)}</TableCell>
+              <TableCell>R$ {(card.limit - card.currentSpending).toFixed(2)}</TableCell>
+            </TableRow>
+          ))}
+        </TableBody>
+      </Table>
     </div>
   )
 }

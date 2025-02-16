@@ -1,69 +1,66 @@
 "use client"
 
-import type React from "react"
-
 import { useState } from "react"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import type { CreditCard } from "../types"
+import { useRouter } from "next/navigation"
 
-interface CreditCardFormProps {
-  onSubmit: (card: Omit<CreditCard, "id">) => void
-  initialValues?: CreditCard
-}
-
-export function CreditCardForm({ onSubmit, initialValues }: CreditCardFormProps) {
-  const [formData, setFormData] = useState<Omit<CreditCard, "id">>({
-    bank: initialValues?.bank || "",
-    lastFour: initialValues?.lastFour || "",
-    limit: initialValues?.limit || 0,
-    currentSpending: initialValues?.currentSpending || 0,
+export function CreditCardForm() {
+  const router = useRouter()
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    bank: "",
+    lastFour: "",
+    limit: 0,
   })
 
-  const handleSubmit = (e: React.FormEvent) => {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault()
-    onSubmit(formData)
-    if (!initialValues) {
-      setFormData({ bank: "", lastFour: "", limit: 0, currentSpending: 0 })
+    setLoading(true)
+
+    try {
+      const response = await fetch("/api/credit-cards", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(formData),
+      })
+
+      if (!response.ok) throw new Error("Falha ao criar cartão")
+      
+      router.refresh()
+      setFormData({ bank: "", lastFour: "", limit: 0 })
+    } catch (error) {
+      console.error("Erro ao criar cartão:", error)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target
-    setFormData((prev) => ({
-      ...prev,
-      [name]: name === "limit" || name === "currentSpending" ? Number.parseFloat(value) : value,
-    }))
-  }
-
   return (
-    <form onSubmit={handleSubmit} className="space-y-4">
-      <div>
-        <Label htmlFor="bank">Banco</Label>
-        <Input id="bank" name="bank" value={formData.bank} onChange={handleChange} required />
-      </div>
-      <div>
-        <Label htmlFor="lastFour">Últimos 4 dígitos</Label>
-        <Input id="lastFour" name="lastFour" value={formData.lastFour} onChange={handleChange} required maxLength={4} />
-      </div>
-      <div>
-        <Label htmlFor="limit">Limite</Label>
-        <Input id="limit" name="limit" type="number" value={formData.limit} onChange={handleChange} required min={0} />
-      </div>
-      <div>
-        <Label htmlFor="currentSpending">Gasto Atual</Label>
-        <Input
-          id="currentSpending"
-          name="currentSpending"
-          type="number"
-          value={formData.currentSpending}
-          onChange={handleChange}
-          required
-          min={0}
-        />
-      </div>
-      <Button type="submit">{initialValues ? "Atualizar Cartão" : "Adicionar Cartão"}</Button>
+    <form onSubmit={onSubmit} className="space-y-4">
+      <Input
+        placeholder="Banco"
+        value={formData.bank}
+        onChange={(e) => setFormData({ ...formData, bank: e.target.value })}
+        required
+      />
+      <Input
+        placeholder="Últimos 4 dígitos"
+        value={formData.lastFour}
+        onChange={(e) => setFormData({ ...formData, lastFour: e.target.value })}
+        maxLength={4}
+        required
+      />
+      <Input
+        type="number"
+        placeholder="Limite"
+        value={formData.limit}
+        onChange={(e) => setFormData({ ...formData, limit: Number(e.target.value) })}
+        required
+      />
+      <Button type="submit" disabled={loading}>
+        {loading ? "Criando..." : "Adicionar Cartão"}
+      </Button>
     </form>
   )
 }
