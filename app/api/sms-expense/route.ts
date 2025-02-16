@@ -4,6 +4,11 @@ import { categorizarDespesa } from "@/app/services/expense-categorization"
 
 export async function POST(request: Request) {
   try {
+    const apiKey = request.headers.get('x-api-key')
+    if (apiKey !== process.env.SMS_API_KEY) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
     const { message } = await request.json()
 
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
