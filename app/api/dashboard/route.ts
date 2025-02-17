@@ -38,101 +38,67 @@ export async function GET() {
     const lastMonthTotal = lastMonthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
     const expenseChange = lastMonthTotal ? ((totalExpenses - lastMonthTotal) / lastMonthTotal) * 100 : 0
 
-    // Encontrar maior gasto por categoria (apenas do mês atual)
+    // Encontrar maior gasto por categoria
     const expensesByCategory = currentMonthExpenses.reduce((acc, expense) => {
       acc[expense.category] = (acc[expense.category] || 0) + expense.amount
       return acc
     }, {} as Record<string, number>)
 
-    const biggestExpenseCategory = Object.entries(expensesByCategory).reduce(
+    const biggestExpense = Object.entries(expensesByCategory).reduce(
       (max, [category, amount]) => 
-        amount > max.amount ? { category, amount } : max,
+        amount > (max.amount || 0) ? { category, amount } : max,
       { category: "", amount: 0 }
     )
 
     // Calcular cartão mais usado
-    const expensesByCard = expenses.reduce((acc, expense) => {
+    const cardUsage = currentMonthExpenses.reduce((acc, expense) => {
       if (expense.bank && expense.cardLastFour) {
-        const cardKey = `${expense.bank}-${expense.cardLastFour}`
-        acc[cardKey] = (acc[cardKey] || 0) + expense.amount
+        const cardName = `${expense.bank} ${expense.cardLastFour}`
+        acc[cardName] = (acc[cardName] || 0) + expense.amount
       }
       return acc
     }, {} as Record<string, number>)
 
-    let mostUsedCard = { name: "", usage: 0 }
-    if (Object.keys(expensesByCard).length > 0) {
-      const [cardKey, amount] = Object.entries(expensesByCard).reduce(
-        (max, [key, sum]) => (sum > max[1] ? [key, sum] : max),
-        ["", 0]
-      )
-      const [bank, cardLastFour] = cardKey.split("-")
-      const card = creditCards.find(c => c.bank === bank && c.lastFour === cardLastFour)
-      if (card) {
-        mostUsedCard = {
-          name: `${card.bank} (${card.lastFour})`,
-          usage: totalExpenses > 0 ? (amount / totalExpenses) * 100 : 0
-        }
-      }
-    }
+    const mostUsedCard = Object.entries(cardUsage).reduce(
+      (max, [name, amount]) => {
+        const usage = (amount / totalExpenses) * 100
+        return usage > (max.usage || 0) ? { name, usage } : max
+      },
+      { name: "", usage: 0 }
+    )
 
-    // Calcular visão geral mensal (últimos 6 meses)
+    // Calcular visão mensal (últimos 6 meses)
     const monthlyOverview = Array.from({ length: 6 }, (_, i) => {
-      const month = new Date()
-      month.setMonth(month.getMonth() - i)
-      
+      const date = new Date()
+      date.setMonth(date.getMonth() - i)
+      const month = date.toLocaleString('pt-BR', { month: 'short' })
       const monthExpenses = expenses.filter(expense => {
         const expenseDate = new Date(expense.date)
-        return expenseDate.getMonth() === month.getMonth() &&
-               expenseDate.getFullYear() === month.getFullYear()
+        return expenseDate.getMonth() === date.getMonth() &&
+               expenseDate.getFullYear() === date.getFullYear()
       })
-
-      const total = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
-
-      return {
-        month: month.toLocaleString('pt-BR', { month: 'short' }).toUpperCase(),
-        expenses: total
-      }
+      const expenses_total = monthExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+      return { month, expenses: expenses_total }
     }).reverse()
-
-    // Buscar todas as metas financeiras
-    const goals = await prisma.financialGoal.findMany()
-    
-    // Calcular economia total (soma dos valores atuais de todas as metas)
-    const totalSavings = goals.reduce((sum, goal) => sum + goal.currentAmount, 0)
-    
-    // Calcular total alvo (soma dos valores alvo de todas as metas)
-    const totalTarget = goals.reduce((sum, goal) => sum + goal.targetAmount, 0)
-    
-    // Calcular porcentagem em relação à meta total
-    const savingsChange = totalTarget > 0 
-      ? (totalSavings / totalTarget) * 100 
-      : 0
-
-    // Preparar despesas recentes (apenas as do mês atual)
-    const recentExpenses = currentMonthExpenses
-      .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5)
-      .map(e => ({
-        id: e.id,
-        description: e.description,
-        amount: e.amount,
-        date: e.date.toISOString(),
-        category: e.category
-      }))
 
     const dashboardData: DashboardData = {
       totalExpenses,
       expenseChange,
-      biggestExpense: biggestExpenseCategory,
+      biggestExpense,
       mostUsedCard,
       savings: {
-        amount: totalSavings,
-        change: savingsChange
+        amount: 0,
+        change: 0
       },
       monthlyOverview,
-      recentExpenses,
+      recentExpenses: currentMonthExpenses.slice(0, 5).map(expense => ({
+        id: expense.id,
+        description: expense.description,
+        amount: expense.amount,
+        date: expense.date.toISOString()
+      })),
       creditCardUsage: creditCards.map(card => ({
-        name: `${card.bank} (${card.lastFour})`,
+        name: `${card.bank} ${card.lastFour}`,
         limit: card.limit,
         used: card.currentSpending
       }))
@@ -140,7 +106,7 @@ export async function GET() {
 
     return NextResponse.json(dashboardData)
   } catch (error) {
-    console.error("Error fetching dashboard data:", error)
+    console.error("Erro ao buscar dados do dashboard:", error)
     return NextResponse.json(
       { error: "Erro ao buscar dados do dashboard" },
       { status: 500 }
