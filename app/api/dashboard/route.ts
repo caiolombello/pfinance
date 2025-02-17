@@ -4,13 +4,38 @@ import type { DashboardData } from "../types"
 
 export async function GET() {
   try {
-    // Buscar todas as despesas
+    // Buscar todas as despesas com select explícito
     const expenses = await prisma.expense.findMany({
-      orderBy: { date: "desc" }
+      orderBy: { date: "desc" },
+      select: {
+        id: true,
+        description: true,
+        amount: true,
+        installmentAmount: true,
+        date: true,
+        bank: true,
+        cardLastFour: true,
+        category: true,
+        installments: true,
+        installmentNumber: true,
+        currentInstallment: true,
+        type: true,
+        createdAt: true,
+        updatedAt: true,
+        creditCardId: true
+      }
     })
 
     // Buscar cartões de crédito
-    const creditCards = await prisma.creditCard.findMany()
+    const creditCards = await prisma.creditCard.findMany({
+      select: {
+        id: true,
+        bank: true,
+        lastFour: true,
+        limit: true,
+        currentSpending: true
+      }
+    })
 
     // Calcular gastos totais do mês atual
     const currentDate = new Date()
@@ -103,6 +128,11 @@ export async function GET() {
         used: card.currentSpending
       }))
     }
+
+    // Adicione estes logs após as queries
+    console.log("Despesas encontradas:", expenses.length)
+    console.log("Cartões encontrados:", creditCards.length)
+    console.log("Despesas do mês atual:", currentMonthExpenses.length)
 
     return NextResponse.json(dashboardData)
   } catch (error) {
