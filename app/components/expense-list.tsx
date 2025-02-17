@@ -26,7 +26,7 @@ export function ExpenseList({ expenses, onUpdate, onDelete }: ExpenseListProps) 
   const [sortDirection, setSortDirection] = useState<SortDirection>('desc')
   const [selectedMonth, setSelectedMonth] = useState<string>(() => {
     const now = new Date()
-    return `${now.getFullYear()}-${String(now.getMonth()).padStart(2, '0')}`
+    return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
   })
 
   const handleSort = (field: SortField) => {
@@ -175,7 +175,7 @@ export function ExpenseList({ expenses, onUpdate, onDelete }: ExpenseListProps) 
                 <TableCell>{expense.description}</TableCell>
                 <TableCell>{formatCurrency(expense.amount)}</TableCell>
                 <TableCell>
-                  {new Date(new Date(expense.date).setDate(new Date(expense.date).getDate() + 1)).toLocaleDateString('pt-BR')}
+                  {new Date(new Date(expense.date).setDate(new Date(expense.date).getDate())).toLocaleDateString('pt-BR')}
                 </TableCell>
                 <TableCell>{expense.bank || '-'}</TableCell>
                 <TableCell>{expense.cardLastFour ? `**** ${expense.cardLastFour}` : '-'}</TableCell>
