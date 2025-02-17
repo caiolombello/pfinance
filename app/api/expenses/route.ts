@@ -4,15 +4,28 @@ import { prisma } from "@/lib/prisma"
 export async function GET() {
   try {
     const expenses = await prisma.expense.findMany({
-      orderBy: { date: "desc" }
+      orderBy: { date: "desc" },
+      select: {
+        id: true,
+        description: true,
+        amount: true,
+        date: true,
+        bank: true,
+        cardLastFour: true,
+        category: true,
+        installments: true,
+        installmentNumber: true,
+        installmentAmount: true,
+        type: true
+      }
     })
-    return NextResponse.json({ expenses })
+
+    // Garantir que sempre retorne um array, mesmo que vazio
+    return NextResponse.json({ expenses: expenses || [] })
   } catch (error) {
     console.error("Erro ao buscar despesas:", error)
-    return NextResponse.json(
-      { error: "Erro ao buscar despesas" },
-      { status: 500 }
-    )
+    // Em caso de erro, retornar array vazio ao invés de erro 500
+    return NextResponse.json({ expenses: [] })
   }
 }
 
