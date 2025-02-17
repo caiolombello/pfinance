@@ -4,35 +4,35 @@ import type { Expense } from "../types"
 const categoryKeywords: Record<string, string[]> = {
   Alimentação: [
     "restaurante", "supermercado", "lanchonete", "café", "ifood", "rappi", 
-    "padaria", "mercado", "açougue", "food", "burger", "pizza"
+    "padaria", "mercado", "açougue", "food", "burger", "pizza", "alimentação"
   ],
   Transporte: [
     "uber", "taxi", "ônibus", "metrô", "combustível", "99", "cabify", 
-    "posto", "estacionamento", "pedágio", "passagem"
+    "posto", "estacionamento", "pedágio", "passagem", "transporte"
   ],
   Moradia: [
     "aluguel", "condomínio", "luz", "água", "gás", "internet", "iptu", 
-    "manutenção", "reforma", "móveis"
+    "manutenção", "reforma", "móveis", "moradia"
   ],
   Saúde: [
     "farmácia", "hospital", "médico", "dentista", "plano de saúde", 
-    "academia", "psicólogo", "exames"
+    "academia", "psicólogo", "exames", "saúde"
   ],
   Entretenimento: [
     "cinema", "teatro", "show", "streaming", "netflix", "spotify", "amazon", 
-    "disney", "hbo", "jogos", "game", "steam", "playstation"
+    "disney", "hbo", "jogos", "game", "steam", "playstation", "entretenimento"
   ],
   Educação: [
     "escola", "faculdade", "curso", "livro", "udemy", "alura", 
-    "coursera", "material escolar"
+    "coursera", "material escolar", "educação"
   ],
   Serviços: [
     "assinatura", "mensalidade", "serviço", "manutenção", 
-    "limpeza", "lavanderia"
+    "limpeza", "lavanderia", "serviços"
   ],
   Compras: [
     "shopping", "loja", "roupa", "calçado", "acessório", "eletrônico",
-    "amazon", "mercadolivre", "magazine", "americanas"
+    "amazon", "mercadolivre", "magazine", "americanas", "compras"
   ]
 }
 
