@@ -7,6 +7,7 @@ import { GastosMensais } from "../components/gastos-mensais"
 import { EstatisticasGerais } from "../components/estatisticas-gerais"
 import { GastosPorCartao } from "../components/gastos-por-cartao"
 import type { Expense } from "../types"
+import { Loader2 } from "lucide-react"
 
 // Formato JSON esperado da API:
 /*
@@ -28,21 +29,16 @@ import type { Expense } from "../types"
 export default function RelatoriosPage() {
   const [expenses, setExpenses] = useState<Expense[]>([])
   const [isLoading, setIsLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function fetchExpenses() {
       try {
         setIsLoading(true)
         const response = await fetch("/api/expenses")
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
-        }
         const data = await response.json()
         setExpenses(data.expenses)
-      } catch (err) {
-        setError("Erro ao carregar as despesas. Por favor, tente novamente mais tarde.")
-        console.error(err)
+      } catch (error) {
+        console.error("Erro ao buscar despesas:", error)
       } finally {
         setIsLoading(false)
       }
@@ -52,11 +48,15 @@ export default function RelatoriosPage() {
   }, [])
 
   if (isLoading) {
-    return <div>Carregando...</div>
+    return (
+      <div className="flex h-[50vh] items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
+      </div>
+    )
   }
 
-  if (error) {
-    return <div>{error}</div>
+  if (!expenses.length) {
+    return <div>Nenhuma despesa encontrada</div>
   }
 
   return (
